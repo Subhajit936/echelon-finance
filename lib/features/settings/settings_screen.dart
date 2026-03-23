@@ -9,7 +9,6 @@ import '../../providers/user_profile_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/notification_provider.dart';
-import '../../core/api/api_client.dart';
 import '../../providers/auth_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -572,7 +571,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: AppColors.onSurfaceVariant,
               letterSpacing: 0.5,
             ),
           ),
@@ -605,8 +604,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               icon: const Icon(Icons.logout, size: 18),
               label: const Text('Sign Out'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.spending,
-                side: BorderSide(color: AppColors.spending.withOpacity(0.5)),
+                foregroundColor: AppColors.tertiary,
+                side: BorderSide(color: AppColors.tertiary.withOpacity(0.5)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -620,7 +619,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
                       TextButton(
                         onPressed: () => Navigator.pop(ctx, true),
-                        child: Text('Sign Out', style: TextStyle(color: AppColors.spending)),
+                        child: Text('Sign Out', style: TextStyle(color: AppColors.tertiary)),
                       ),
                     ],
                   ),

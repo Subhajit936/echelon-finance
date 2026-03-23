@@ -61,14 +61,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 'Welcome back',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: AppColors.onSurface,
                     ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Sign in to The Ledger',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.onSurfaceVariant,
                     ),
               ),
               const SizedBox(height: 40),
@@ -78,16 +78,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.spending.withOpacity(0.1),
+                    color: AppColors.tertiary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.spending.withOpacity(0.3)),
+                    border: Border.all(color: AppColors.tertiary.withOpacity(0.3)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: AppColors.spending, size: 18),
+                      Icon(Icons.error_outline, color: AppColors.tertiary, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(auth.error!, style: TextStyle(color: AppColors.spending, fontSize: 13)),
+                        child: Text(auth.error!, style: TextStyle(color: AppColors.tertiary, fontSize: 13)),
                       ),
                     ],
                   ),
@@ -100,7 +100,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    _Field(
+                    AuthFormField(
                       controller: _emailCtrl,
                       label: 'Email',
                       hint: 'you@example.com',
@@ -108,14 +108,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                     ),
                     const SizedBox(height: 16),
-                    _Field(
+                    AuthFormField(
                       controller: _passCtrl,
                       label: 'Password',
                       hint: '••••••••',
                       obscure: _obscure,
                       suffix: IconButton(
                         icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
-                            color: AppColors.textSecondary, size: 20),
+                            color: AppColors.onSurfaceVariant, size: 20),
                         onPressed: () => setState(() => _obscure = !_obscure),
                       ),
                       validator: (v) => (v == null || v.length < 6) ? 'Minimum 6 characters' : null,
@@ -166,7 +166,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onTap: () => context.go('/register'),
                   child: RichText(
                     text: TextSpan(
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                      style: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 14),
                       children: [
                         const TextSpan(text: "Don't have an account? "),
                         TextSpan(
@@ -186,7 +186,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
-class _Field extends StatelessWidget {
+class AuthFormField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final String hint;
@@ -195,7 +195,7 @@ class _Field extends StatelessWidget {
   final Widget? suffix;
   final String? Function(String?)? validator;
 
-  const _Field({
+  const AuthFormField({
     required this.controller,
     required this.label,
     required this.hint,

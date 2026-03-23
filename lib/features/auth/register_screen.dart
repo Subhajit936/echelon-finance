@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
-import 'login_screen.dart';
+import 'login_screen.dart' show AuthFormField;
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -61,8 +61,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.arrow_back_ios, size: 16, color: AppColors.textSecondary),
-                    Text('Back', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                    Icon(Icons.arrow_back_ios, size: 16, color: AppColors.onSurfaceVariant),
+                    Text('Back', style: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 14)),
                   ],
                 ),
               ),
@@ -81,14 +81,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 'Create account',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: AppColors.onSurface,
                     ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Start tracking your finances',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.onSurfaceVariant,
                     ),
               ),
               const SizedBox(height: 32),
@@ -98,17 +98,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.spending.withOpacity(0.1),
+                    color: AppColors.tertiary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.spending.withOpacity(0.3)),
+                    border: Border.all(color: AppColors.tertiary.withOpacity(0.3)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: AppColors.spending, size: 18),
+                      Icon(Icons.error_outline, color: AppColors.tertiary, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(auth.error!,
-                            style: TextStyle(color: AppColors.spending, fontSize: 13)),
+                            style: TextStyle(color: AppColors.tertiary, fontSize: 13)),
                       ),
                     ],
                   ),
@@ -120,14 +120,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    _Field(
+                    AuthFormField(
                       controller: _nameCtrl,
                       label: 'Full Name',
                       hint: 'Rahul Sharma',
                       validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
                     ),
                     const SizedBox(height: 16),
-                    _Field(
+                    AuthFormField(
                       controller: _emailCtrl,
                       label: 'Email',
                       hint: 'you@example.com',
@@ -135,27 +135,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                     ),
                     const SizedBox(height: 16),
-                    _Field(
+                    AuthFormField(
                       controller: _passCtrl,
                       label: 'Password',
                       hint: '••••••••',
                       obscure: _obscure,
                       suffix: IconButton(
                         icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
-                            color: AppColors.textSecondary, size: 20),
+                            color: AppColors.onSurfaceVariant, size: 20),
                         onPressed: () => setState(() => _obscure = !_obscure),
                       ),
                       validator: (v) => (v == null || v.length < 6) ? 'Minimum 6 characters' : null,
                     ),
                     const SizedBox(height: 16),
-                    _Field(
+                    AuthFormField(
                       controller: _confirmCtrl,
                       label: 'Confirm Password',
                       hint: '••••••••',
                       obscure: _obscureConfirm,
                       suffix: IconButton(
                         icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility,
-                            color: AppColors.textSecondary, size: 20),
+                            color: AppColors.onSurfaceVariant, size: 20),
                         onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
                       ),
                       validator: (v) =>
@@ -206,7 +206,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   onTap: () => context.go('/login'),
                   child: RichText(
                     text: TextSpan(
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                      style: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 14),
                       children: [
                         const TextSpan(text: 'Already have an account? '),
                         TextSpan(
