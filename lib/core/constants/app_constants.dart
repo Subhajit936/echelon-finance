@@ -29,6 +29,12 @@ class AppConstants {
   static const int transactionPageSize = 20;
   static const int maxChatHistory = 20;
 
+  // ── Backend (Railway) ─────────────────────────────────────────────────────
+  /// Default Railway deployment URL — used when user has not overridden it.
+  static const String defaultBackendUrl =
+      'https://echelon-finance-production.up.railway.app';
+  static const String defaultBackendToken = 'EchelonBackend2026';
+
   // ── API / Sync ────────────────────────────────────────────────────────────
   static const apiTimeout = Duration(seconds: 15);
   static const syncRetryDelay = Duration(seconds: 5);

@@ -27,28 +27,28 @@ class ApiClient {
   Future<void> saveToken(String token) =>
       _storage.write(key: _tokenKey, value: token.trim());
 
-  Future<bool> isConfigured() async {
-    final url = await getBaseUrl();
-    return url != null && url.isNotEmpty;
-  }
+  /// Returns true — the default Railway URL is always available.
+  Future<bool> isConfigured() async => true;
 
   // ─── HTTP helpers ─────────────────────────────────────────────────────────
 
   Future<Map<String, String>> _headers() async {
-    final token = await getToken();
+    final stored = await getToken();
+    final token = (stored != null && stored.isNotEmpty)
+        ? stored
+        : AppConstants.defaultBackendToken;
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      'Authorization': 'Bearer $token',
     };
   }
 
   Future<String> _base() async {
-    final url = await getBaseUrl();
-    if (url == null || url.isEmpty) {
-      throw ApiException('Backend URL not configured');
-    }
-    return url;
+    final stored = await getBaseUrl();
+    return (stored != null && stored.isNotEmpty)
+        ? stored
+        : AppConstants.defaultBackendUrl;
   }
 
   Future<dynamic> get(String path, {Map<String, String>? query}) async {
