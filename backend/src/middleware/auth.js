@@ -1,28 +1,35 @@
+const jwt = require('jsonwebtoken');
+
 /**
- * Bearer token auth middleware.
- * If PERSONAL_TOKEN is not set in env, auth is skipped (dev mode).
- * Otherwise, the request must carry: Authorization: Bearer <token>
+ * Auth middleware: accepts either
+ *   1. A valid JWT signed with JWT_SECRET, or
+ *   2. The raw PERSONAL_TOKEN (admin / legacy bypass)
  */
 function authMiddleware(req, res, next) {
-  const token = process.env.PERSONAL_TOKEN;
-
-  // Dev mode – no token configured, skip auth
-  if (!token) {
-    return next();
-  }
-
   const authHeader = req.headers['authorization'] || '';
   const parts = authHeader.split(' ');
 
   if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
-    return res.status(401).json({ error: 'Unauthorized: missing or malformed Authorization header' });
+    return res.status(401).json({ error: 'Authorization required' });
   }
 
-  if (parts[1] !== token) {
-    return res.status(401).json({ error: 'Unauthorized: invalid token' });
+  const token = parts[1];
+
+  // PERSONAL_TOKEN bypass (admin / testing)
+  if (process.env.PERSONAL_TOKEN && token === process.env.PERSONAL_TOKEN) {
+    req.userId = 'admin';
+    return next();
   }
 
-  next();
+  // JWT verification
+  const secret = process.env.JWT_SECRET || 'echelon-dev-secret-change-in-prod';
+  try {
+    const decoded = jwt.verify(token, secret);
+    req.userId = decoded.userId;
+    next();
+  } catch {
+    res.status(401).json({ error: 'Session expired. Please log in again.' });
+  }
 }
 
 module.exports = authMiddleware;

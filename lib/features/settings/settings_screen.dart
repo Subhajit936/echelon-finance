@@ -10,6 +10,7 @@ import '../../providers/chat_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../core/api/api_client.dart';
+import '../../providers/auth_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -560,6 +561,75 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               title: const Text('Clear chat history'),
               subtitle: const Text('Remove all AI chat messages'),
               onTap: _clearChatHistory,
+            ),
+          ),
+          const SizedBox(height: 32),
+          const Divider(),
+          const SizedBox(height: 16),
+          // Account section
+          Text(
+            'Account',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Show logged-in user info
+          Consumer(builder: (context, ref, _) {
+            final auth = ref.watch(authProvider);
+            if (auth.userEmail != null) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.person_outline, size: 18, color: Color(0xFF6B7280)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        auth.userEmail!,
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF374151)),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.logout, size: 18),
+              label: const Text('Sign Out'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.spending,
+                side: BorderSide(color: AppColors.spending.withOpacity(0.5)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Sign Out'),
+                    content: const Text('Are you sure you want to sign out?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text('Sign Out', style: TextStyle(color: AppColors.spending)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true && mounted) {
+                  await ref.read(authProvider.notifier).logout();
+                  if (mounted) context.go('/login');
+                }
+              },
             ),
           ),
           const SizedBox(height: 32),

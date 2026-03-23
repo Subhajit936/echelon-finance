@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/user_profile_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../features/auth/login_screen.dart';
+import '../../features/auth/register_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/onboarding/api_key_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
@@ -20,24 +23,37 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
   final profileAsync = ref.watch(userProfileProvider);
+  final authState = ref.watch(authProvider);
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/dashboard',
     redirect: (context, state) {
-      if (profileAsync.isLoading) return null;
+      // Still loading — don't redirect yet
+      if (profileAsync.isLoading || authState.isLoading) return null;
+
       final profile = profileAsync.valueOrNull;
       final onboarded = profile?.onboardingComplete ?? false;
 
-      final onOnboarding = state.matchedLocation.startsWith('/onboarding') ||
-          state.matchedLocation.startsWith('/api-key');
+      final loc = state.matchedLocation;
+      final onOnboarding =
+          loc.startsWith('/onboarding') || loc.startsWith('/api-key');
+      final onAuth = loc.startsWith('/login') || loc.startsWith('/register');
 
+      // 1. Must complete onboarding first
       if (!onboarded && !onOnboarding) return '/onboarding';
-      if (onboarded && onOnboarding) return '/dashboard';
+      if (onboarded && onOnboarding) return '/login';
+
+      // 2. Must be logged in to use the app
+      if (onboarded && !authState.isAuthenticated && !onAuth) return '/login';
+
+      // 3. Already logged in — skip auth screens
+      if (authState.isAuthenticated && onAuth) return '/dashboard';
+
       return null;
     },
     routes: [
-      // Onboarding (outside shell)
+      // ── Onboarding (no auth required) ──────────────────────────────────
       GoRoute(
         path: '/onboarding',
         builder: (_, __) => const OnboardingScreen(),
@@ -47,21 +63,31 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const ApiKeyScreen(),
       ),
 
-      // Settings (outside shell — full screen)
+      // ── Auth screens (no auth required) ────────────────────────────────
+      GoRoute(
+        path: '/login',
+        builder: (_, __) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (_, __) => const RegisterScreen(),
+      ),
+
+      // ── Settings (outside shell — full screen) ──────────────────────────
       GoRoute(
         path: '/settings',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __) => const SettingsScreen(),
       ),
 
-      // SMS Import (outside shell — full screen)
+      // ── SMS Import (outside shell — full screen) ────────────────────────
       GoRoute(
         path: '/sms-import',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __) => const SmsImportScreen(),
       ),
 
-      // Shell route — persistent bottom nav
+      // ── Shell route — persistent bottom nav ────────────────────────────
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) => AppScaffold(child: child),

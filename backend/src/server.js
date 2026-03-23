@@ -10,6 +10,7 @@ const { connectDB } = require('./db');
 const authMiddleware = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
 
+const authRouter = require('./routes/auth');
 const transactionsRouter = require('./routes/transactions');
 const goalsRouter = require('./routes/goals');
 const budgetsRouter = require('./routes/budgets');
@@ -36,6 +37,9 @@ app.get('/api/health', (req, res) => {
     env: process.env.NODE_ENV || 'development'
   });
 });
+
+// Auth routes (no auth required)
+app.use('/api/auth', authRouter);
 
 // ─── Auth on all /api routes (except /api/health above) ──────────────────────
 app.use('/api', authMiddleware);

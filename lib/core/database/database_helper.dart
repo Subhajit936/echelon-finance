@@ -119,4 +119,19 @@ class DatabaseHelper {
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     // Future migrations go here
   }
+
+  /// Clears all user-generated data from local SQLite (called on login to
+  /// eliminate stale seed/test data and start fresh from the remote source).
+  Future<void> clearUserData() async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('transactions');
+      await txn.delete('goals');
+      await txn.delete('investments');
+      await txn.delete('investment_snapshots');
+      await txn.delete('budgets');
+      await txn.delete('chat_messages');
+      // Keep user_profile — it holds currency preference + onboarding flag
+    });
+  }
 }
