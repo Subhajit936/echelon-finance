@@ -1,0 +1,12 @@
+{
+  "name": "echelon-finance",
+  "version": "1.0.0",
+  "description": "Echelon Finance - Root entry for Railway deployment",
+  "scripts": {
+    "start": "node backend/src/server.js",
+    "build": "cd backend && npm install --production"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
