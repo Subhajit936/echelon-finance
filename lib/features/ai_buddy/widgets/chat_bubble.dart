@@ -68,7 +68,7 @@ class ChatBubble extends StatelessWidget {
                     merchant: message.parsedTransaction!.merchant,
                     amount: message.parsedTransaction!.amount,
                     category: message.parsedTransaction!.category.label,
-                    type: message.parsedTransaction!.type.name,
+                    type: message.parsedTransaction!.type,
                     currency: currency,
                   ),
                 const SizedBox(height: 2),
@@ -119,7 +119,7 @@ class _TransactionConfirmCard extends StatelessWidget {
   final String merchant;
   final double amount;
   final String category;
-  final String type;
+  final TransactionType type;
   final String currency;
 
   const _TransactionConfirmCard({
@@ -132,7 +132,7 @@ class _TransactionConfirmCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isIncome = type == 'income';
+    final isIncome = type == TransactionType.income;
     return Container(
       margin: const EdgeInsets.only(top: 6),
       padding: const EdgeInsets.all(12),

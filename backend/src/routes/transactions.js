@@ -249,6 +249,35 @@ router.get('/', async (req, res) => {
   res.json({ data: transactions, total, offset, limit });
 });
 
+// ─── PUT /api/transactions/:id ────────────────────────────────────────────────
+router.put(
+  '/:id',
+  [
+    param('id').notEmpty().withMessage('id is required'),
+    body('merchant').optional().notEmpty().withMessage('merchant cannot be empty'),
+    body('category').optional().isIn(['food', 'transport', 'housing', 'utilities', 'entertainment', 'healthcare', 'education', 'shopping', 'salary', 'freelance', 'investment', 'other']).withMessage('invalid category'),
+    body('type').optional().isIn(['income', 'expense']).withMessage('type must be income or expense'),
+    body('amount').optional().isFloat({ min: 0 }).withMessage('amount must be a non-negative number'),
+  ],
+  validate,
+  async (req, res) => {
+    const { merchant, category, type, amount, date, status, note, currency } = req.body;
+    const updates = {};
+    if (merchant !== undefined) updates.merchant = merchant;
+    if (category !== undefined) updates.category = category;
+    if (type !== undefined) updates.type = type;
+    if (amount !== undefined) updates.amount = Number(amount);
+    if (date !== undefined) updates.date = new Date(Number(date));
+    if (status !== undefined) updates.status = status;
+    if (note !== undefined) updates.note = note;
+    if (currency !== undefined) updates.currency = currency;
+
+    const updated = await Transaction.findByIdAndUpdate(req.params.id, updates, { new: true });
+    if (!updated) return res.status(404).json({ error: 'Transaction not found' });
+    res.json(updated);
+  }
+);
+
 // ─── DELETE /api/transactions/:id ─────────────────────────────────────────────
 router.delete(
   '/:id',

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/sms_service.dart';
+import '../../data/models/transaction.dart';
 import '../../providers/database_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/user_profile_provider.dart';
@@ -19,6 +21,7 @@ class _SmsImportScreenState extends ConsumerState<SmsImportScreen> {
   bool _loading = false;
   bool _importing = false;
   String? _error;
+  bool _permissionDenied = false;
   int _daysBack = 90;
   int _importedCount = 0;
 
@@ -32,6 +35,7 @@ class _SmsImportScreenState extends ConsumerState<SmsImportScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _permissionDenied = false;
       _items = [];
     });
 
@@ -40,7 +44,8 @@ class _SmsImportScreenState extends ConsumerState<SmsImportScreen> {
       final hasPermission = await sms.requestPermission();
       if (!hasPermission) {
         setState(() {
-          _error = 'SMS permission denied. Grant it in Android Settings → Apps → Echelon → Permissions.';
+          _error = 'SMS permission denied. Tap "Open Settings" below to grant it.';
+          _permissionDenied = true;
           _loading = false;
         });
         return;
@@ -176,6 +181,14 @@ class _SmsImportScreenState extends ConsumerState<SmsImportScreen> {
               const SizedBox(height: 16),
               Text(_error!, textAlign: TextAlign.center),
               const SizedBox(height: 16),
+              if (_permissionDenied) ...[
+                FilledButton.icon(
+                  onPressed: () => openAppSettings(),
+                  icon: const Icon(Icons.settings_outlined),
+                  label: const Text('Open Settings'),
+                ),
+                const SizedBox(height: 8),
+              ],
               FilledButton.icon(
                 onPressed: _scan,
                 icon: const Icon(Icons.refresh),
@@ -261,7 +274,7 @@ class _SmsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final txn = item.transaction;
-    final isIncome = txn.type.name == 'income';
+    final isIncome = txn.type == TransactionType.income;
     final color = isIncome ? Colors.green : Colors.red;
     final sign = isIncome ? '+' : '-';
     final currencySymbol = txn.currency == 'INR' ? '₹' : '\$';

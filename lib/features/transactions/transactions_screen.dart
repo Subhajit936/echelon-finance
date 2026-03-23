@@ -7,6 +7,7 @@ import '../../core/utils/number_formatter.dart';
 import '../../core/utils/animation_helper.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/user_profile_provider.dart';
+import '../../data/models/transaction.dart';
 import '../../providers/database_provider.dart';
 import 'widgets/transaction_tile.dart';
 import 'widgets/savings_rate_gauge.dart';
@@ -66,10 +67,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
 
     // Calculate period totals
     final income = state.transactions
-        .where((t) => t.type.name == 'income')
+        .where((t) => t.type == TransactionType.income)
         .fold(0.0, (s, t) => s + t.amount);
     final expense = state.transactions
-        .where((t) => t.type.name == 'expense')
+        .where((t) => t.type == TransactionType.expense)
         .fold(0.0, (s, t) => s + t.amount);
     final net = income - expense;
 

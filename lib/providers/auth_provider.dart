@@ -146,6 +146,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
+  void clearError() {
+    state = state.copyWith(error: null);
+  }
+
   Future<void> logout() async {
     await _api.clearJwt();
     await _storage.delete(key: _emailKey);

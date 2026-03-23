@@ -115,6 +115,30 @@ router.post(
   }
 );
 
+// ─── PUT /api/budgets/:id ─────────────────────────────────────────────────────
+router.put(
+  '/:id',
+  [
+    param('id').notEmpty().withMessage('id is required'),
+    body('limitAmount').optional().isFloat({ min: 0 }).withMessage('limitAmount must be a non-negative number'),
+    body('category').optional().isIn(['food', 'transport', 'housing', 'utilities', 'entertainment', 'healthcare', 'education', 'shopping', 'salary', 'freelance', 'investment', 'other']).withMessage('invalid category'),
+  ],
+  validate,
+  async (req, res) => {
+    const { category, limitAmount, periodStart, periodEnd, currency } = req.body;
+    const updates = {};
+    if (category !== undefined) updates.category = category;
+    if (limitAmount !== undefined) updates.limitAmount = Number(limitAmount);
+    if (periodStart !== undefined) updates.periodStart = new Date(Number(periodStart));
+    if (periodEnd !== undefined) updates.periodEnd = new Date(Number(periodEnd));
+    if (currency !== undefined) updates.currency = currency;
+
+    const updated = await Budget.findByIdAndUpdate(req.params.id, updates, { new: true });
+    if (!updated) return res.status(404).json({ error: 'Budget not found' });
+    res.json(updated);
+  }
+);
+
 // ─── DELETE /api/budgets/:id ──────────────────────────────────────────────────
 router.delete(
   '/:id',

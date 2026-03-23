@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/models/goal.dart';
 import 'database_provider.dart';
 import 'goal_provider.dart';
 
@@ -78,7 +79,7 @@ final insightsProvider = FutureProvider<InsightsSummary>((ref) async {
   }
 
   // Goal progress average
-  final activeGoals = goals.where((g) => g.status.name == 'active').toList();
+  final activeGoals = goals.where((g) => g.status == GoalStatus.active).toList();
   final goalProgress = activeGoals.isEmpty
       ? 50.0
       : activeGoals.fold(0.0, (s, g) => s + g.progressPercent * 100) / activeGoals.length;
