@@ -50,14 +50,52 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> _init() async {
     final jwt = await _api.getJwt();
-    final email = await _storage.read(key: _emailKey);
-    final name = await _storage.read(key: _nameKey);
-    state = AuthState(
-      isLoading: false,
-      isAuthenticated: jwt != null && jwt.isNotEmpty,
-      userEmail: email,
-      userName: name,
-    );
+    if (jwt == null || jwt.isEmpty) {
+      state = const AuthState(isLoading: false, isAuthenticated: false);
+      return;
+    }
+
+    // Validate the stored JWT against the server
+    try {
+      final res = await _api.get(ApiEndpoints.authMe);
+      final user = res['user'] as Map<String, dynamic>;
+      await _storage.write(key: _emailKey, value: user['email'] as String);
+      await _storage.write(key: _nameKey, value: user['name'] as String);
+      state = AuthState(
+        isLoading: false,
+        isAuthenticated: true,
+        userEmail: user['email'] as String,
+        userName: user['name'] as String,
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode == 401) {
+        // Token is expired or invalid — force re-login
+        await _api.clearJwt();
+        await _storage.delete(key: _emailKey);
+        await _storage.delete(key: _nameKey);
+        state = const AuthState(isLoading: false, isAuthenticated: false);
+      } else {
+        // Network error or server down — trust the stored token
+        final email = await _storage.read(key: _emailKey);
+        final name = await _storage.read(key: _nameKey);
+        state = AuthState(
+          isLoading: false,
+          isAuthenticated: true,
+          userEmail: email,
+          userName: name,
+        );
+      }
+    } catch (_) {
+      // Network unreachable — trust the stored token
+      final email = await _storage.read(key: _emailKey);
+      final name = await _storage.read(key: _nameKey);
+      state = AuthState(
+        isLoading: false,
+        isAuthenticated: true,
+        userEmail: email,
+        userName: name,
+      );
+    }
   }
 
   Future<void> login(String email, String password) async {

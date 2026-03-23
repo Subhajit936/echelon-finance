@@ -6,8 +6,6 @@ import '../../core/constants/app_text_styles.dart';
 import '../../data/models/user_profile.dart';
 import '../../providers/user_profile_provider.dart';
 import '../../shared/widgets/gradient_button.dart';
-import '../../core/database/seed_data.dart';
-import '../../providers/database_provider.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -44,10 +42,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
 
     await ref.read(userProfileProvider.notifier).save(profile);
-
-    // Seed sample data
-    final db = ref.read(databaseHelperProvider);
-    await SeedData.seed(db, _currency);
 
     if (mounted) context.go('/api-key');
   }

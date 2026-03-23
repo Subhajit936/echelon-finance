@@ -38,14 +38,14 @@ class _ApiKeyScreenState extends ConsumerState<ApiKeyScreen> {
     );
 
     setState(() => _saving = false);
-    if (mounted) context.go('/dashboard');
+    if (mounted) context.go('/login');
   }
 
   Future<void> _skip() async {
     await ref.read(userProfileProvider.notifier).save(
       ref.read(userProfileProvider).value!.copyWith(onboardingComplete: true),
     );
-    if (mounted) context.go('/dashboard');
+    if (mounted) context.go('/login');
   }
 
   @override

@@ -1,9 +1,10 @@
 class ApiEndpoints {
   static const health = '/api/health';
 
-  // Auth (no token required)
+  // Auth
   static const authLogin = '/api/auth/login';
   static const authRegister = '/api/auth/register';
+  static const authMe = '/api/auth/me';
 
   // Transactions
   static const transactions = '/api/transactions';
