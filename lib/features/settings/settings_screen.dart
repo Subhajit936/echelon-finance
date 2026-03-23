@@ -10,6 +10,7 @@ import '../../providers/chat_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/live_sms_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -228,6 +229,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
       }
     }
+  }
+
+  Future<void> _showThresholdDialog() async {
+    final currency = ref.read(userProfileProvider).valueOrNull?.preferredCurrency ?? 'INR';
+    final current = ref.read(smsThresholdProvider);
+    final symbol = currency == 'INR' ? '₹' : '\$';
+    final ctrl = TextEditingController(text: current.toStringAsFixed(0));
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Auto-add threshold'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'SMS transactions below this amount are auto-added silently. Anything above shows a confirmation banner.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Threshold',
+                prefixText: '$symbol ',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(_), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+            onPressed: () {
+              final v = double.tryParse(ctrl.text.trim());
+              if (v != null && v > 0) {
+                ref.read(smsThresholdProvider.notifier).setThreshold(v);
+              }
+              Navigator.pop(_);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
   }
 
   @override
@@ -495,14 +544,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 20),
 
           // ── SMS Import ───────────────────────────────────────────────────
-          _SectionHeader(icon: Icons.sms_outlined, title: 'SMS Import'),
+          _SectionHeader(icon: Icons.sms_outlined, title: 'SMS / Live Detection'),
           _Card(
-            child: ListTile(
-              leading: const Icon(Icons.import_export),
-              title: const Text('Import from bank SMS'),
-              subtitle: const Text('Scan inbox and auto-detect bank transactions'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push('/sms-import'),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.import_export),
+                  title: const Text('Import from bank SMS'),
+                  subtitle: const Text('Scan inbox and auto-detect bank transactions'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/sms-import'),
+                ),
+                const Divider(height: 1),
+                Consumer(builder: (_, ref, __) {
+                  final threshold = ref.watch(smsThresholdProvider);
+                  final symbol = currency == 'INR' ? '₹' : '\$';
+                  return ListTile(
+                    leading: const Icon(Icons.tune_outlined),
+                    title: const Text('Auto-add threshold'),
+                    subtitle: Text(
+                        'Expenses under $symbol${threshold.toStringAsFixed(0)} are added silently'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: _showThresholdDialog,
+                  );
+                }),
+              ],
             ),
           ),
           const SizedBox(height: 20),
