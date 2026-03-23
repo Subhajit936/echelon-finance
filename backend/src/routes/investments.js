@@ -125,6 +125,33 @@ router.post(
   }
 );
 
+// ─── PUT /api/investments/:id ─────────────────────────────────────────────────
+router.put(
+  '/:id',
+  [
+    param('id').notEmpty().withMessage('id is required'),
+    body('units').optional().isFloat({ min: 0 }).withMessage('units must be a non-negative number'),
+    body('currentPrice').optional().isFloat({ min: 0 }).withMessage('currentPrice must be a non-negative number'),
+    body('assetClass').optional().isIn(['equities', 'realEstate', 'fixedIncome', 'crypto', 'cash']).withMessage('invalid assetClass'),
+  ],
+  validate,
+  async (req, res) => {
+    const { name, ticker, assetClass, units, currentPrice, sevenDayReturn, currency } = req.body;
+    const updates = { lastUpdated: new Date() };
+    if (name !== undefined) updates.name = name;
+    if (ticker !== undefined) updates.ticker = ticker;
+    if (assetClass !== undefined) updates.assetClass = assetClass;
+    if (units !== undefined) updates.units = Number(units);
+    if (currentPrice !== undefined) updates.currentPrice = Number(currentPrice);
+    if (sevenDayReturn !== undefined) updates.sevenDayReturn = Number(sevenDayReturn);
+    if (currency !== undefined) updates.currency = currency;
+
+    const updated = await Investment.findByIdAndUpdate(req.params.id, updates, { new: true });
+    if (!updated) return res.status(404).json({ error: 'Investment not found' });
+    res.json(updated);
+  }
+);
+
 // ─── DELETE /api/investments/:id ──────────────────────────────────────────────
 router.delete(
   '/:id',

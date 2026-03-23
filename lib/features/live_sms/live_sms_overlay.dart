@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/models/transaction.dart';
 import '../../providers/live_sms_provider.dart';
 
 /// Wraps the entire app and renders a sliding banner for every pending
@@ -65,7 +66,7 @@ class _LiveSmsBannerState extends ConsumerState<_LiveSmsBanner>
   @override
   Widget build(BuildContext context) {
     final txn = widget.detection.transaction;
-    final isIncome = txn.type.name == 'income';
+    final isIncome = txn.type == TransactionType.income;
     final color = isIncome ? Colors.green.shade700 : AppColors.tertiary;
     final sign = isIncome ? '+' : '-';
     final symbol = txn.currency == 'INR' ? '₹' : '\$';

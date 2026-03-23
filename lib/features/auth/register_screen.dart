@@ -124,6 +124,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       controller: _nameCtrl,
                       label: 'Full Name',
                       hint: 'Rahul Sharma',
+                      onChanged: (_) => ref.read(authProvider.notifier).clearError(),
                       validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
                     ),
                     const SizedBox(height: 16),
@@ -132,6 +133,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       label: 'Email',
                       hint: 'you@example.com',
                       keyboardType: TextInputType.emailAddress,
+                      onChanged: (_) => ref.read(authProvider.notifier).clearError(),
                       validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                     ),
                     const SizedBox(height: 16),
@@ -140,6 +142,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       label: 'Password',
                       hint: '••••••••',
                       obscure: _obscure,
+                      onChanged: (_) => ref.read(authProvider.notifier).clearError(),
                       suffix: IconButton(
                         icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
                             color: AppColors.onSurfaceVariant, size: 20),
@@ -153,6 +156,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       label: 'Confirm Password',
                       hint: '••••••••',
                       obscure: _obscureConfirm,
+                      onChanged: (_) => ref.read(authProvider.notifier).clearError(),
                       suffix: IconButton(
                         icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility,
                             color: AppColors.onSurfaceVariant, size: 20),

@@ -113,8 +113,10 @@ class TransactionRepository {
           if (from != null) 'from': from.millisecondsSinceEpoch.toString(),
           if (to != null) 'to': to.millisecondsSinceEpoch.toString(),
         };
-        final data =
-            await _api.get(ApiEndpoints.transactions, query: query) as List;
+        // Backend returns { data: [...], total, offset, limit }
+        final resp = await _api.get(ApiEndpoints.transactions, query: query)
+            as Map<String, dynamic>;
+        final data = resp['data'] as List;
         return data.map((e) => _txnFromRemote(e as Map<String, dynamic>)).toList();
       }
     } catch (_) {}

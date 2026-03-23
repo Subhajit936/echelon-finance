@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -70,5 +71,12 @@ router.post(
     res.json({ token, user: { id: user._id, name: user.name, email } });
   }
 );
+
+// ─── GET /api/auth/me ─────────────────────────────────────────────────────────
+router.get('/me', auth, async (req, res) => {
+  const user = await User.findById(req.userId).select('name email');
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json({ user: { id: user._id, name: user.name, email: user.email } });
+});
 
 module.exports = router;

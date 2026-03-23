@@ -1,11 +1,39 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../core/services/live_sms_service.dart';
 import '../core/services/sms_service.dart';
 import '../data/models/transaction.dart';
 import 'database_provider.dart';
 import 'transaction_provider.dart';
 import 'user_profile_provider.dart';
+
+// ── SMS auto-add threshold ────────────────────────────────────────────────────
+
+class SmsThresholdNotifier extends StateNotifier<double> {
+  final FlutterSecureStorage _storage;
+  static const _key = 'sms_auto_add_threshold';
+  static const _default = 10000.0;
+
+  SmsThresholdNotifier(this._storage) : super(_default) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final v = await _storage.read(key: _key);
+    if (v != null) state = double.tryParse(v) ?? _default;
+  }
+
+  Future<void> setThreshold(double value) async {
+    await _storage.write(key: _key, value: value.toString());
+    state = value;
+  }
+}
+
+final smsThresholdProvider =
+    StateNotifierProvider<SmsThresholdNotifier, double>((ref) {
+  return SmsThresholdNotifier(ref.watch(secureStorageProvider));
+});
 
 // ── Data classes ──────────────────────────────────────────────────────────────
 
@@ -99,28 +127,12 @@ class LiveSmsNotifier extends StateNotifier<LiveSmsState> {
     }
   }
 
-  // ── TODO: YOUR CONTRIBUTION ───────────────────────────────────────────────
-  // Decide whether an incoming detected transaction is silently auto-added
-  // or shown as a confirmation banner.
-  //
-  // You have access to:
-  //   txn  → AppTransaction  (amount, type, merchant, category, date)
-  //   raw  → RawSmsEvent     (body text, sender string)
-  //
-  // Design choices to consider (5–10 lines):
-  //   • Auto-add small routine expenses (e.g. amount < 500)?
-  //   • Always confirm income (salary/freelance) since it's high-value & rare?
-  //   • Always confirm if merchant == 'Bank Transfer' (ambiguous parser fallback)?
-  //   • Auto-add if the sender exactly matches a known major bank header?
-  //   • Never auto-add amounts above a certain threshold (e.g. ₹10,000)?
-  //
-  // Return true  → silently added to the database
-  // Return false → shown in a confirmation banner (Add / Dismiss)
   bool _shouldAutoAdd(AppTransaction txn, RawSmsEvent raw) {
     // Always confirm income — salary/credits are rare and high-value
     if (txn.type == TransactionType.income) return false;
-    // Always confirm large amounts (> ₹10,000 / $200)
-    if (txn.amount > 10000) return false;
+    // Always confirm amounts above the user-configurable threshold
+    final threshold = _ref.read(smsThresholdProvider);
+    if (txn.amount > threshold) return false;
     // Confirm ambiguous bank-transfer catch-all
     if (txn.merchant.toLowerCase() == 'bank transfer') return false;
     // Confirm unknown/generic merchants
@@ -128,7 +140,6 @@ class LiveSmsNotifier extends StateNotifier<LiveSmsState> {
     // Auto-add small routine expenses from known merchants
     return true;
   }
-  // ─────────────────────────────────────────────────────────────────────────
 
   /// User tapped "Add" on the confirmation banner.
   Future<void> confirm(String detectionId) async {

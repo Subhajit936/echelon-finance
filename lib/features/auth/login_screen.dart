@@ -105,6 +105,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       label: 'Email',
                       hint: 'you@example.com',
                       keyboardType: TextInputType.emailAddress,
+                      onChanged: (_) => ref.read(authProvider.notifier).clearError(),
                       validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                     ),
                     const SizedBox(height: 16),
@@ -113,6 +114,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       label: 'Password',
                       hint: '••••••••',
                       obscure: _obscure,
+                      onChanged: (_) => ref.read(authProvider.notifier).clearError(),
                       suffix: IconButton(
                         icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
                             color: AppColors.onSurfaceVariant, size: 20),
@@ -194,6 +196,7 @@ class AuthFormField extends StatelessWidget {
   final bool obscure;
   final Widget? suffix;
   final String? Function(String?)? validator;
+  final void Function(String)? onChanged;
 
   const AuthFormField({
     required this.controller,
@@ -203,6 +206,7 @@ class AuthFormField extends StatelessWidget {
     this.obscure = false,
     this.suffix,
     this.validator,
+    this.onChanged,
   });
 
   @override
@@ -218,6 +222,7 @@ class AuthFormField extends StatelessWidget {
           keyboardType: keyboardType,
           obscureText: obscure,
           validator: validator,
+          onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFFADB5BD)),
