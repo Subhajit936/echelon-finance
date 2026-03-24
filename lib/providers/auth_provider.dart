@@ -1,8 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../core/api/api_client.dart';
-import '../core/api/api_endpoints.dart';
 import '../core/database/database_helper.dart';
+import '../core/database/seed_data.dart';
 import 'database_provider.dart';
 
 class AuthState {
@@ -37,56 +36,21 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final ApiClient _api;
   final FlutterSecureStorage _storage;
   final DatabaseHelper _db;
 
   static const _emailKey = 'auth_user_email';
   static const _nameKey = 'auth_user_name';
+  static const _passwordKey = 'auth_user_password';
+  static const _isLoggedInKey = 'auth_is_logged_in';
 
-  AuthNotifier(this._api, this._storage, this._db) : super(const AuthState()) {
+  AuthNotifier(this._storage, this._db) : super(const AuthState()) {
     _init();
   }
 
   Future<void> _init() async {
-    final jwt = await _api.getJwt();
-    if (jwt == null || jwt.isEmpty) {
-      state = const AuthState(isLoading: false, isAuthenticated: false);
-      return;
-    }
-
-    // Validate the stored JWT against the server
-    try {
-      final res = await _api.get(ApiEndpoints.authMe);
-      final user = res['user'] as Map<String, dynamic>;
-      await _storage.write(key: _emailKey, value: user['email'] as String);
-      await _storage.write(key: _nameKey, value: user['name'] as String);
-      state = AuthState(
-        isLoading: false,
-        isAuthenticated: true,
-        userEmail: user['email'] as String,
-        userName: user['name'] as String,
-      );
-    } on ApiException catch (e) {
-      if (e.statusCode == 401) {
-        // Token is expired or invalid — force re-login
-        await _api.clearJwt();
-        await _storage.delete(key: _emailKey);
-        await _storage.delete(key: _nameKey);
-        state = const AuthState(isLoading: false, isAuthenticated: false);
-      } else {
-        // Network error or server down — trust the stored token
-        final email = await _storage.read(key: _emailKey);
-        final name = await _storage.read(key: _nameKey);
-        state = AuthState(
-          isLoading: false,
-          isAuthenticated: true,
-          userEmail: email,
-          userName: name,
-        );
-      }
-    } catch (_) {
-      // Network unreachable — trust the stored token
+    final isLoggedIn = await _storage.read(key: _isLoggedInKey);
+    if (isLoggedIn == 'true') {
       final email = await _storage.read(key: _emailKey);
       final name = await _storage.read(key: _nameKey);
       state = AuthState(
@@ -95,54 +59,77 @@ class AuthNotifier extends StateNotifier<AuthState> {
         userEmail: email,
         userName: name,
       );
+    } else {
+      // Clear any stale seed/demo data from old sessions so the app
+      // starts fresh once the user logs in or registers.
+      await _db.clearUserData();
+      state = const AuthState(isLoading: false, isAuthenticated: false);
     }
+  }
+
+  Future<String> _getProfileCurrency() async {
+    final db = await _db.database;
+    final rows = await db.query('user_profile', limit: 1);
+    if (rows.isEmpty) return 'INR';
+    return (rows.first['preferred_currency'] as String?) ?? 'INR';
   }
 
   Future<void> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
-    try {
-      final res = await _api.postNoAuth(
-        ApiEndpoints.authLogin,
-        {'email': email.trim().toLowerCase(), 'password': password},
-      );
-      await _saveSession(res);
-      await _db.clearUserData();
-    } catch (e) {
+
+    final storedEmail = await _storage.read(key: _emailKey);
+    final storedPassword = await _storage.read(key: _passwordKey);
+    final storedName = await _storage.read(key: _nameKey);
+
+    if (storedEmail == null || storedEmail.isEmpty) {
       state = state.copyWith(
         isLoading: false,
-        error: e is ApiException ? e.message : 'Login failed. Check your connection.',
+        error: "No account found on this device. Tap \"Create one\" to register.",
       );
+      return;
     }
+
+    if (storedEmail != email.trim().toLowerCase() || storedPassword != password) {
+      state = state.copyWith(isLoading: false, error: 'Incorrect email or password.');
+      return;
+    }
+
+    await _storage.write(key: _isLoggedInKey, value: 'true');
+    state = AuthState(
+      isLoading: false,
+      isAuthenticated: true,
+      userEmail: storedEmail,
+      userName: storedName,
+    );
   }
 
   Future<void> register(String name, String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
-    try {
-      final res = await _api.postNoAuth(
-        ApiEndpoints.authRegister,
-        {'name': name.trim(), 'email': email.trim().toLowerCase(), 'password': password},
-      );
-      await _saveSession(res);
-      await _db.clearUserData();
-    } catch (e) {
+
+    final existing = await _storage.read(key: _emailKey);
+    if (existing != null && existing.isNotEmpty) {
       state = state.copyWith(
         isLoading: false,
-        error: e is ApiException ? e.message : 'Registration failed. Check your connection.',
+        error: 'An account already exists on this device. Sign in instead.',
       );
+      return;
     }
-  }
 
-  Future<void> _saveSession(Map<String, dynamic> res) async {
-    final token = res['token'] as String;
-    final user = res['user'] as Map<String, dynamic>;
-    await _api.saveJwt(token);
-    await _storage.write(key: _emailKey, value: user['email'] as String);
-    await _storage.write(key: _nameKey, value: user['name'] as String);
+    await _storage.write(key: _emailKey, value: email.trim().toLowerCase());
+    await _storage.write(key: _nameKey, value: name.trim());
+    await _storage.write(key: _passwordKey, value: password);
+    await _storage.write(key: _isLoggedInKey, value: 'true');
+
+    // Clear any leftover data and seed fresh demo data for the new account.
+    await _db.clearUserData();
+    final currency = await _getProfileCurrency();
+    await SeedData.seed(_db, currency);
+
     state = AuthState(
       isLoading: false,
       isAuthenticated: true,
-      userEmail: user['email'] as String,
-      userName: user['name'] as String,
+      userEmail: email.trim().toLowerCase(),
+      userName: name.trim(),
     );
   }
 
@@ -151,16 +138,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    await _api.clearJwt();
-    await _storage.delete(key: _emailKey);
-    await _storage.delete(key: _nameKey);
+    await _storage.write(key: _isLoggedInKey, value: 'false');
     state = const AuthState(isLoading: false, isAuthenticated: false);
   }
 }
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
-    ref.watch(apiClientProvider),
     ref.watch(secureStorageProvider),
     ref.watch(databaseHelperProvider),
   );
